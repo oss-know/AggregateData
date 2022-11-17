@@ -14,9 +14,6 @@
 # email_domain_list = ['huawei.com', 'fb.com']
 
 
-######################################
-
-
 def generate(owner, repo, email_domain_list):
     arg1 = ""
     arg2 = ""
@@ -72,5 +69,25 @@ def generate(owner, repo, email_domain_list):
     group by company
     order by company_commit_count desc;
     """
-    print(sql_tplt)
     return sql_tplt
+
+
+######################################
+ID = 'COMPANY_COMMITS_IN_PROJECT'
+TEMPLATE_INFO = {
+    "label": "各公司在项目中的提交",
+    "template_id": ID,
+    "params": [
+        {
+            "name": "owner", "description": "项目组织",
+        },
+        {
+            "name": "repo", "description": "项目代码库",
+        },
+        {
+            "name": "email_domain_list", "description": "Email后缀（json数组）",
+        }
+    ],
+}
+TEMPLATE = TEMPLATE_INFO.copy()
+TEMPLATE['generator'] = generate

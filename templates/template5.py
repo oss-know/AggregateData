@@ -1,7 +1,8 @@
 # -*-coding:utf-8-*-
 # sql_templete
 
-# clickhouse+native://<admin>:<admin>@<192.168.8.50>:<19000>/<default>[?options…]clickhouse://{username}:{password}@{hostname}:{port}/{database}
+# clickhouse+native://<admin>:<admin>@<192.168.8.50>:<19000>/<default>[?options…]clickhouse://{username}:{password}@{
+# hostname}:{port}/{database}
 
 # 多个公司issues 的回复
 ######################################
@@ -10,26 +11,16 @@
 owner = "pytorch"
 repo = "pytorch"
 # 邮箱后缀用，分割 如 ['huawei.com','fb.com']
-email_domain_list = ['huawei.com','fb.com']
+email_domain_list = ['huawei.com', 'fb.com']
 ######################################
-
-
-
-
-
-
-
-
-
-
 
 
 arg1 = ""
 arg2 = ""
 arg3 = ""
-for i, v in enumerate(email_domain_list) :
+for i, v in enumerate(email_domain_list):
 
-    if i == len(email_domain_list)-1:
+    if i == len(email_domain_list) - 1:
         arg1 += f" splitByChar('@', commit__author__email)[2] = '{v}' "
         arg2 += f" \'{v.split('.')[-2]}\'"
         arg3 += f" final_company_inferred_from_company = '{v.split('.')[-2]}'"
@@ -37,7 +28,6 @@ for i, v in enumerate(email_domain_list) :
         arg1 += f" splitByChar('@', commit__author__email)[2] = '{v}' or"
         arg2 += f" splitByChar('@', commit__author__email)[2] = '{v}', \'{v.split('.')[-2]}\',"
         arg3 += f" final_company_inferred_from_company = '{v.split('.')[-2]}' or"
-
 
 if len(email_domain_list) != 1:
     arg2 = f"multiIf({arg2})"
@@ -83,7 +73,8 @@ where id global in (select *
                                                           from (select author__id,
                                                                        {arg2} as company
                                                                 from github_commits
-                                                                where search_key__owner = '{owner}' and search_key__repo = '{repo}'
+                                                                where search_key__owner = '{owner}' and 
+                                                                search_key__repo = '{repo}'
                                                                   and author__id != 0
                                                                   and ({arg1}))
                                                           group by author__id, company
@@ -93,3 +84,23 @@ group by company
 order by count() desc;
 """
 print(sql_tplt)
+
+######################################
+ID = 'DEVELOPER_COUNT_BY_COMPANY_IN_PROJECT'
+TEMPLATE_INFO = {
+    "label": "各公司参与项目的开发者人数",
+    "template_id": ID,
+    "params": [
+        {
+            "name": "owner", "description": "项目组织",
+        },
+        {
+            "name": "repo", "description": "项目代码库",
+        },
+        {
+            "name": "email_domain_list", "description": "Email后缀（json数组）",
+        }
+    ],
+}
+TEMPLATE = TEMPLATE_INFO.copy()
+TEMPLATE['generator'] = generate

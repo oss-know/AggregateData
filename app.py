@@ -6,7 +6,7 @@ from flask import request
 from flask_cors import CORS
 
 from superset import SupersetApi
-from templates.template_infos import template_info_list, get_template_label, generate_sql, TemplateNotFound
+from templates import template_info_list, get_template_label, generate_sql, TemplateNotFound
 
 SUPERSET_SERVER = os.environ.get('SUPERSET_SERVER', 'http://localhost:8088')
 SUPERSET_USERNAME = os.environ.get('SUPERSET_USERNAME', 'admin')

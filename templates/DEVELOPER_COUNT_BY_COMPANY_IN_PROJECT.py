@@ -74,7 +74,25 @@ def generate(owner, repo, email_domain_list):
     group by company
     order by count() desc
     """
-    print(
-        '-----------------------------------------------------------------------------------------------------------------')
-    print(sql_tplt)
     return sql_tplt
+
+
+######################################
+ID = 'DEVELOPER_COUNT_BY_COMPANY_IN_PROJECT'
+TEMPLATE_INFO = {
+    "label": "各公司参与项目的开发者人数",
+    "template_id": ID,
+    "params": [
+        {
+            "name": "owner", "description": "项目组织",
+        },
+        {
+            "name": "repo", "description": "项目代码库",
+        },
+        {
+            "name": "email_domain_list", "description": "Email后缀（json数组）",
+        }
+    ],
+}
+TEMPLATE = TEMPLATE_INFO.copy()
+TEMPLATE['generator'] = generate
