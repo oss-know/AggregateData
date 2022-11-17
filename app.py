@@ -2,6 +2,7 @@ import os
 
 from flask import Flask
 from flask import request
+from flask_cors import CORS
 
 from templates.template_infos import template_info_list
 from superset import SupersetApi
@@ -15,6 +16,7 @@ SupersetApi.init(SUPERSET_SERVER, SUPERSET_USERNAME, SUPERSET_PASSWORD, SUPERSET
 SupersetApi._singleton.info()
 
 app = Flask(__name__)
+cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 
 # @app.route('/')
@@ -28,9 +30,8 @@ def create_dataset():  # put application's code here
     if 'template_id' not in req_json or 'params' not in req_json:
         return {"error_msg": "Missing essential params"}, 400
     # TODO Generate sql from template
-    result = SupersetApi.create_dataset(0, 'default', 'select count() from gits')
-    print(result)
-    return 'Hello World!'
+    result = SupersetApi.create_dataset(0, 'default', 'gits', 'select count() from gits')
+    return result.text
 
 
 @app.route('/api/datasets')
