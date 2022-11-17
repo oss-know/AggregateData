@@ -1,13 +1,18 @@
 import requests
 
 
+class DatasetCreatonFailed(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
 class SupersetApi:
     _singleton = None
 
     SECURITY_LOGIN_PATH = 'api/v1/security/login'
-    SECURITY_CSRF_TOKEN_PATH = 'api/v1/security/csrf_token'
+    SECURITY_CSRF_TOKEN_PATH = 'api/v1/security/csrf_token/'
 
-    DATASET_PATH = 'api/v1/dataset'
+    DATASET_PATH = 'api/v1/dataset/'
 
     def __init__(self, base_url, username, password, provider, refresh=True):
         self.base_url = base_url
@@ -21,10 +26,11 @@ class SupersetApi:
         self.json_fields = {}
         self.api_base_headers = {}
 
-    def info(self):
+    @classmethod
+    def info(cls):
         import json
-        print(json.dumps(self.json_fields, indent=2))
-        print(json.dumps(self.api_base_headers, indent=2))
+        print(json.dumps(cls._singleton.json_fields, indent=2))
+        print(json.dumps(cls._singleton.api_base_headers, indent=2))
 
     @classmethod
     def init(cls, base_url, username, password, provider, refresh=True):
@@ -42,7 +48,7 @@ class SupersetApi:
         cls_singleton.json_fields['access_token'] = access_token_and_refresh_token['access_token']
         if cls_singleton.refresh:
             cls_singleton.json_fields['refresh_token'] = access_token_and_refresh_token['refresh_token']
-
+        cls_singleton.api_base_headers['Authorization'] = f'Bearer {access_token_and_refresh_token["access_token"]}'
         return response.status_code
 
     @classmethod
@@ -57,11 +63,10 @@ class SupersetApi:
         cls._singleton.json_fields["csrf_token"] = csrf_token_json["result"]
 
         if response.status_code == 200:
-            cls._singleton.api_base_headers = {
-                'Authorization': 'Bearer ' + cls._singleton.json_fields["access_token"],
-                'Cookie': f'session={cls._singleton.json_fields["cookie_session"]}',
-                'CSRFToken': cls._singleton.json_fields['csrf_token'], 'accept': 'application/json'
-            }
+            cls._singleton.api_base_headers['Cookie'] = f'session={cls._singleton.json_fields["cookie_session"]}'
+            cls._singleton.api_base_headers['CSRFToken'] = cls._singleton.json_fields['csrf_token']
+            cls._singleton.api_base_headers['csrf_token'] = cls._singleton.json_fields['csrf_token']
+            cls._singleton.api_base_headers['Accept'] = 'application/json'
         return response.status_code
 
     @classmethod
@@ -70,31 +75,16 @@ class SupersetApi:
         return requests.get(req_url, headers=cls._singleton.api_base_headers).json()
 
     @classmethod
-    def create_dataset(cls, database_id, schema, sql):
+    def create_dataset(cls, database_id, schema, table_name, sql):
         req_url = f'{cls._singleton.base_url}/{SupersetApi.DATASET_PATH}'
         payload = {
             "database": database_id,  # "external_url": "string",
             # "is_managed_externally": True,
             # "owners": [0],
-            "schema": schema, "sql": sql,
+            "schema": schema, "table_name": table_name, "sql": sql,
         }
         res = requests.post(req_url, headers=cls._singleton.api_base_headers, json=payload)
-        print(payload, req_url)
-        print(cls._singleton.api_base_headers)
-        print(res.text)
-        return res
+        if res.status_code != 201:
+            raise DatasetCreatonFailed(res.text)
 
-    # def create_dataset(self,):  #     url = 'http://localhost:8088/api/v1/dataset/'  #     request_body = {  #  #
-    # "database": 0,  #         "external_url": "string",  #         "is_managed_externally": True,
-    #         "owners": [  #             0  #         ],  #         "schema": "string",  #         "sql": "string",
-    #         "table_name": "string"  #     }  #  #     r = requests.post(url, headers=self.API_BASE_HEADERS,
-    #         body)  #     print(r.text)  #     return r.json()
-
-# if __name__ == '__main__':
-#     superset_token = SupersetToken()
-#     res = superset_token.security_login()
-#
-#     superset_token.get_session_and_csrf_token()
-#     print("st:", superset_token)
-#
-#     superset_token.get_dataset_list()
+        return res.json()['id']
